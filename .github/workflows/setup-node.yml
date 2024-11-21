@@ -1,0 +1,29 @@
+name: Setup Node.js Workflow
+
+on:
+  pull_request:
+    types:
+      - opened
+    branches:
+      - main  # Run the workflow on pull requests to the main branch
+
+jobs:
+  setup-node:
+    runs-on: ubuntu-latest  # Use the latest Ubuntu runner
+
+    steps:
+      # Step 1: Check out the code
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'  # Specify your Node.js version 
+
+      # Step 3 : Verify Node.js setup
+      - name: Verify Node.js installation
+        run: |
+          node --version
+          npm --version
