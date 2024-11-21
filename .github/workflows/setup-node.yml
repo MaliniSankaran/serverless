@@ -9,6 +9,7 @@ on:
 
 jobs:
   setup-node:
+    name   : Setup Node
     runs-on: ubuntu-latest  # Use the latest Ubuntu runner
 
     steps:
