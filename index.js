@@ -1,13 +1,11 @@
 // index.js
 
 import sendgrid from '@sendgrid/mail';
+import AWS from 'aws-sdk';
 
-// Get the environment variables for SendGrid API key and sender email
-const sendgridApiKey = process.env.SENDGRID_API_KEY;  // Secret API key for SendGrid
-const emailSender = process.env.EMAIL_SENDER; 
-
-// Set SendGrid API key
-sendgrid.setApiKey(sendgridApiKey);
+// Create an instance of the Secrets Manager client
+const secretsManager = new AWS.SecretsManager();
+const secretName = process.env.SECRET_NAME;
 
 // Lambda handler function
 export const handler = async (event) => {
@@ -19,6 +17,28 @@ export const handler = async (event) => {
   
     console.log("Verification link:", verification_link);
   
+    let sendgridApiKey;
+    let emailSender;
+    try {
+        const secretValue = await secretsManager.getSecretValue({ SecretId: secretName }).promise();
+        if (secretValue.SecretString) {
+            const secret = JSON.parse(secretValue.SecretString);
+            sendgridApiKey = secret.sendgrid_api_key;  // Extract SendGrid API key
+            emailSender    = secret.email_sender;      // Extract email sender
+        } else {
+            console.error('Secret string is empty or does not exist');
+            throw new Error('Secret string not found');
+        }
+    } catch (err) {
+        console.error('Error retrieving secret:', err);
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ message: 'Error retrieving SendGrid API key', error: err.message })
+        };
+    }
+
+    // Set SendGrid API key
+    sendgrid.setApiKey(sendgridApiKey);
     // Set the expiration time for the token (2 minutes from now)
     const expiryTime = expiry_time || new Date(Date.now() + 2 * 60 * 1000).toISOString();  // 2 minutes expiration
   
