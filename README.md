@@ -1,32 +1,82 @@
-# Serverless Lambda Functions for Email Verification
+# 📧 Email Verification Lambda
 
-This repository contains Lambda functions that integrate with AWS SNS to send email verification links to users. The Lambda function is invoked whenever a new user account is created and handles the following tasks:
+Node.js-based Lambda that sends verification emails for user sign-up via SendGrid, triggered by SNS messages.
 
-1. Sends an email to the user with a verification link.
-2. The verification link expires after 2 minutes.
+## 📚 Table of Contents
 
-## Prerequisites
+- ⚙️ [Functionality](#functionality)
+- 🔄 [Workflow](#workflow)
+- 🔐 [Security & Secrets](#security--secrets)
+- 🚀 [Deployment](#deployment)
+- ⚙️ [Setup Instructions](#setup-instructions)
+- 🔗 [Cross-Repository Integrations](#cross-repository-integrations)
+- ✅ [Best Practices](#best-practices)
 
-- **AWS CLI**: Ensure that AWS CLI is configured with the necessary credentials to interact with your AWS services.
-- **Terraform**: Terraform will be used to create infrastructure and Lambda function resources.
+## ⚙️ Functionality
 
+- SNS-triggered Lambda function
+- Sends user verification emails with expiring links via SendGrid
+- Updates user verification status in RDS
 
-### Serverless Function
+## 🔄 Workflow
 
-The Lambda function listens for messages from AWS SNS and performs the following:
+```
+webapp → SNS → Lambda → SendGrid → User
+                             ↳ RDS Update
+```
 
-- Sends an email with a verification link to the user using the SendGrid API.
-- The verification link expires after 2 minutes.
+1. User registers in [webapp](https://github.com/MaliniSankaran/webapp)
+2. SNS message sent with user info + verification link
+3. Lambda consumes message, sends email
+4. User clicks link within 2 minutes
+5. RDS status is updated (verified)
 
+## 🔐 Security & Secrets
 
-### Email Service Credentials
+- SendGrid API key and sender email stored in AWS Secrets Manager
+- Encrypted using a custom KMS key
+- Lambda retrieves these credentials securely at runtime (no hardcoded credentials)
 
-The email service credentials (e.g., SendGrid API key and email sender address) are stored securely in **AWS Secrets Manager** and encrypted using a **custom KMS key**.
+## 🚀 Deployment
 
-- The Lambda function retrieves these credentials from Secrets Manager on execution.
-  
-### Setup Instructions
+- Node.js dependencies via `npm install`
+- Lambda packaged (zipped) and deployed using Terraform scripts from [tf-aws-infra](https://github.com/MaliniSankaran/tf-aws-infra)
 
-1. Clone the repository
-2. Run `npm install` to install all required packages
-3. Zip the whole directory and move it to the required path in terraform directory
+## ⚙️ Setup Instructions
+
+### Prerequisites
+
+- [AWS CLI](https://aws.amazon.com/cli/): Configure with the necessary credentials to access AWS services.
+- [Terraform](https://www.terraform.io/): Used to provision infrastructure including Lambda resources.
+
+### Installation Steps
+
+1. **Clone the repository**
+   ```bash
+   git clone git@github.com:MaliniSankaran/serverless.git
+   cd serverless
+   ```
+
+2. **Install Node.js dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Zip the project**
+   ```bash
+   zip -r lambda.zip .
+   ```
+
+4. **Move zip to Terraform path**
+   - Place `lambda.zip` in the appropriate directory where Terraform expects the deployment artifact (within the `tf-aws-infra` project).
+
+## 🔗 Cross-Repository Integrations
+
+- SNS Publisher: [webapp](https://github.com/MaliniSankaran/webapp)
+- Infrastructure Provisioner: [tf-aws-infra](https://github.com/MaliniSankaran/tf-aws-infra)
+
+## ✅ Best Practices
+
+- No secrets in repo
+- All infrastructure and code maintained as IaC
+- All updates via pull requests
